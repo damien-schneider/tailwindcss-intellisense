@@ -1384,10 +1384,12 @@ export async function createProjectService(
       let settings = await state.editor.getConfiguration(document.uri)
       let diagnostics = await getSuggestCanonicalClassesDiagnostics(state, document, settings)
 
-      let replacements = diagnostics.map((diagnostic) => ({
-        range: diagnostic.range,
-        newText: diagnostic.suggestions[0],
-      }))
+      let replacements = diagnostics
+        .filter((diagnostic) => diagnostic.suggestions && diagnostic.suggestions.length > 0)
+        .map((diagnostic) => ({
+          range: diagnostic.range,
+          newText: diagnostic.suggestions[0],
+        }))
 
       return { replacements }
     },

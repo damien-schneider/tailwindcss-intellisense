@@ -202,7 +202,7 @@ export async function activate(context: ExtensionContext) {
     let folder = Workspace.getWorkspaceFolder(document.uri)
 
     if (!currentClient || !folder || isExcluded(document.uri.fsPath, folder)) {
-      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
+      throw new Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
 
     let client = await currentClient
@@ -214,7 +214,7 @@ export async function activate(context: ExtensionContext) {
     })
 
     if ('error' in result) {
-      throw Error(
+      throw new Error(
         {
           'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
           'no-document': `Document not found: ${document.uri.fsPath}`,
