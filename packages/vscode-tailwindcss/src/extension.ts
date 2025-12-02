@@ -222,11 +222,11 @@ export async function activate(context: ExtensionContext) {
 
     // Get all diagnostics for the current document
     let allDiagnostics = languages.getDiagnostics(document.uri)
-    
+
     // Filter for SuggestCanonicalClasses diagnostics
     // The diagnostic code will be 'suggestCanonicalClasses' based on DiagnosticKind enum
     let canonicalDiagnostics = allDiagnostics.filter(
-      (diagnostic) => diagnostic.code === 'suggestCanonicalClasses'
+      (diagnostic) => diagnostic.code === 'suggestCanonicalClasses',
     )
 
     if (canonicalDiagnostics.length === 0) {
@@ -237,7 +237,7 @@ export async function activate(context: ExtensionContext) {
     // Create a workspace edit to apply all suggestions
     let workspaceEdit = new WorkspaceEdit()
     let edits: TextEdit[] = []
-    
+
     // Sort diagnostics by position (from end to start) to avoid range invalidation
     canonicalDiagnostics.sort((a, b) => {
       if (a.range.start.line !== b.range.start.line) {
@@ -260,11 +260,11 @@ export async function activate(context: ExtensionContext) {
 
     // Apply the workspace edit
     let success = await Workspace.applyEdit(workspaceEdit)
-    
+
     if (success) {
       let count = canonicalDiagnostics.length
       Window.showInformationMessage(
-        `Applied ${count} canonical class suggestion${count === 1 ? '' : 's'}.`
+        `Applied ${count} canonical class suggestion${count === 1 ? '' : 's'}.`,
       )
     } else {
       Window.showWarningMessage('Failed to apply canonical class suggestions.')
@@ -277,7 +277,7 @@ export async function activate(context: ExtensionContext) {
         await applyAllCanonicalClasses()
       } catch (error) {
         Window.showWarningMessage(
-          `Couldn't apply canonical class suggestions: ${(error as any)?.message}`
+          `Couldn't apply canonical class suggestions: ${(error as any)?.message}`,
         )
       }
     }),
