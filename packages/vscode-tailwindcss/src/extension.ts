@@ -247,11 +247,10 @@ export async function activate(context: ExtensionContext) {
     })
 
     for (let diagnostic of canonicalDiagnostics) {
-      // Extract the canonical class suggestion from the diagnostic message
-      // The message format is: "The class `<original>` can be written as `<canonical>`"
-      let match = diagnostic.message.match(/can be written as `([^`]+)`/)
-      if (match) {
-        let canonicalClass = match[1]
+      // Access the canonical class suggestion directly from the suggestions property
+      // Type assertion needed since languages.getDiagnostics returns vscode.Diagnostic
+      let canonicalClass = (diagnostic as any).suggestions?.[0]
+      if (canonicalClass) {
         edits.push(TextEdit.replace(diagnostic.range, canonicalClass))
       }
     }
