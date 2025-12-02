@@ -262,7 +262,7 @@ export async function activate(context: ExtensionContext) {
     let success = await Workspace.applyEdit(workspaceEdit)
 
     if (success) {
-      let count = canonicalDiagnostics.length
+      let count = edits.length
       Window.showInformationMessage(
         `Applied ${count} canonical class suggestion${count === 1 ? '' : 's'}.`,
       )
@@ -276,9 +276,8 @@ export async function activate(context: ExtensionContext) {
       try {
         await applyAllCanonicalClasses()
       } catch (error) {
-        Window.showWarningMessage(
-          `Couldn't apply canonical class suggestions: ${(error as any)?.message}`,
-        )
+        let message = error instanceof Error ? error.message : 'Unknown error'
+        Window.showWarningMessage(`Couldn't apply canonical class suggestions: ${message}`)
       }
     }),
   )
