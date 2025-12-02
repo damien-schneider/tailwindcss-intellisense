@@ -55,6 +55,7 @@ import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
+import { getSuggestCanonicalClassesDiagnostics } from '@tailwindcss/language-service/src/diagnostics/canonical-classes'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'node:assert'
@@ -115,6 +116,9 @@ export interface ProjectService {
   onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
   onCodeLens(params: CodeLensParams): Promise<CodeLens[]>
   sortClassLists(classLists: string[]): string[]
+  getCanonicalClassReplacements(params: {
+    uri: string
+  }): Promise<{ error: string } | { replacements: Array<{ range: any; newText: string }> }>
 
   dependencies(): Iterable<string>
   reload(): Promise<void>
@@ -1368,6 +1372,24 @@ export async function createProjectService(
 
         return result
       })
+    },
+    async getCanonicalClassReplacements(params: {
+      uri: string
+    }): Promise<{ error: string } | { replacements: Array<{ range: any; newText: string }> }> {
+      let document = documentService.getDocument(params.uri)
+      if (!document) {
+        return { error: 'no-document' }
+      }
+
+      let settings = await state.editor.getConfiguration(document.uri)
+      let diagnostics = await getSuggestCanonicalClassesDiagnostics(state, document, settings)
+
+      let replacements = diagnostics.map((diagnostic) => ({
+        range: diagnostic.range,
+        newText: diagnostic.suggestions[0],
+      }))
+
+      return { replacements }
     },
   }
 }

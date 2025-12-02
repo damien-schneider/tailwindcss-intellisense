@@ -880,6 +880,10 @@ export class TW {
     method: '@/tailwindCSS/getProject',
     params: { uri: string },
   ): { version: string } | null
+  private onRequest(
+    method: '@/tailwindCSS/getCanonicalClassReplacements',
+    params: { uri: string },
+  ): Promise<{ error: string } | { replacements: Array<{ range: any; newText: string }> }>
   private onRequest(method: string, params: any): any {
     if (method === '@/tailwindCSS/sortSelection') {
       let project = this.getProject({ uri: params.uri })
@@ -900,6 +904,18 @@ export class TW {
       }
       return {
         version: project.state.version,
+      }
+    }
+
+    if (method === '@/tailwindCSS/getCanonicalClassReplacements') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project) {
+        return { error: 'no-project' }
+      }
+      try {
+        return project.getCanonicalClassReplacements({ uri: params.uri })
+      } catch {
+        return { error: 'unknown' }
       }
     }
   }

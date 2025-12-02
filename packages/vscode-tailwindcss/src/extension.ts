@@ -195,12 +195,73 @@ export async function activate(context: ExtensionContext) {
     })
   }
 
+  async function applyAllCanonicalClasses(): Promise<void> {
+    if (!Window.activeTextEditor) return
+
+    let { document } = Window.activeTextEditor
+    let folder = Workspace.getWorkspaceFolder(document.uri)
+
+    if (!currentClient || !folder || isExcluded(document.uri.fsPath, folder)) {
+      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
+    }
+
+    let client = await currentClient
+
+    let result = await client.sendRequest<
+      { error: string } | { replacements: Array<{ range: Range; newText: string }> }
+    >('@/tailwindCSS/getCanonicalClassReplacements', {
+      uri: document.uri.toString(),
+    })
+
+    if ('error' in result) {
+      throw Error(
+        {
+          'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
+          'no-document': `Document not found: ${document.uri.fsPath}`,
+        }[result.error] ?? 'An unknown error occurred.',
+      )
+    }
+
+    if (result.replacements.length === 0) {
+      Window.showInformationMessage('No canonical class suggestions found.')
+      return
+    }
+
+    await Window.activeTextEditor.edit((builder) => {
+      for (let replacement of result.replacements) {
+        builder.replace(
+          new Range(
+            new Position(replacement.range.start.line, replacement.range.start.character),
+            new Position(replacement.range.end.line, replacement.range.end.character),
+          ),
+          replacement.newText,
+        )
+      }
+    })
+
+    Window.showInformationMessage(
+      `Applied ${result.replacements.length} canonical class ${result.replacements.length === 1 ? 'suggestion' : 'suggestions'}.`,
+    )
+  }
+
   context.subscriptions.push(
     commands.registerCommand('tailwindCSS.sortSelection', async () => {
       try {
         await sortSelection()
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${(error as any)?.message}`)
+      }
+    }),
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.applyAllCanonicalClasses', async () => {
+      try {
+        await applyAllCanonicalClasses()
+      } catch (error) {
+        Window.showWarningMessage(
+          `Couldn't apply canonical classes: ${(error as any)?.message}`,
+        )
       }
     }),
   )
